@@ -45,7 +45,7 @@ function removeContact(id) {
     }
     console.log(`///Deleted contact:`);
     console.log(deletedContact);
-    const newContacts = contacts.filter((contact) => contact.id !== id);
+    const newContacts = contacts.filter((contact) => contact.id !== Number(id));
     fs.writeFile(
       contactsPath,
       JSON.stringify(newContacts, null, "\t"),
