@@ -1,109 +1,72 @@
 const path = require("path");
 const fs = require("fs");
+const shortid = require("shortid");
+
 //  Раскомментируй и запиши значение
 
 const contactsPath = path.join(__dirname, "db/contacts.json");
 
 // TODO: задокументировать каждую функцию
-// ---Getting contact list
-function listContacts() {
-  fs.readFile(contactsPath, "utf-8", (err, data) => {
-    if (err) {
-      console.log(err.message);
-      return;
-    }
-    const contacts = JSON.parse(data);
-    console.table(contacts);
-  });
+
+// Separeted function for getting contacts list
+function getContactsData() {
+  try {
+    const data = fs.readFileSync(contactsPath, "utf-8");
+    return JSON.parse(data);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ---Getting contact list in console
+async function listContacts() {
+  console.table(getContactsData());
 }
 
 // ---Getting contact by ID
-function getContactById(id) {
-  fs.readFile(contactsPath, "utf-8", (err, data) => {
-    if (err) {
-      console.log(err.message);
-      return;
-    }
-    const contacts = JSON.parse(data);
-    const contact = contacts.find((con) => con.id === Number(id));
-    console.log(contact);
-  });
+async function getContactById(id) {
+  const contacts = getContactsData();
+  const contact = contacts.find((con) => con.id === Number(id));
+  console.log(contact);
 }
 
 // ---Removing contact
-function removeContact(id) {
-  fs.readFile(contactsPath, "utf-8", (err, data) => {
+async function removeContact(id) {
+  const contacts = getContactsData();
+  const deletedContact = contacts.find((cont) => cont.id === Number(id));
+  if (!deletedContact) {
+    console.log(`There is no contact with ID: ${id}`);
+    return;
+  }
+  console.log(`///Deleted contact:`);
+  console.log(deletedContact);
+  const newContacts = contacts.filter((contact) => contact.id !== Number(id));
+  fs.writeFile(contactsPath, JSON.stringify(newContacts, null, "\t"), (err) => {
     if (err) {
       console.log(err.message);
       return;
     }
-    const contacts = JSON.parse(data);
-    const deletedContact = contacts.find((cont) => cont.id === Number(id));
-    if (!deletedContact) {
-      console.log(`There is no contact with ID: ${id}`);
-      return;
-    }
-    console.log(`///Deleted contact:`);
-    console.log(deletedContact);
-    const newContacts = contacts.filter((contact) => contact.id !== Number(id));
-    fs.writeFile(
-      contactsPath,
-      JSON.stringify(newContacts, null, "\t"),
-      (err) => {
-        if (err) {
-          console.log(err.message);
-          return;
-        }
-        console.log(`///New contacts:`);
+    console.log(`///New contacts:`);
 
-        console.table(newContacts);
-      }
-    );
+    console.table(newContacts);
   });
 }
 
 // ---Adding contact to contacts list
-function addContact(name, email, phone) {
-  fs.readFile(contactsPath, "utf-8", (err, data) => {
+async function addContact(name, email, phone) {
+  const contacts = getContactsData();
+
+  // Adding new contact to contacts list -------------------
+  contacts.push({ id: shortid.generate(), name, email, phone });
+  // -----------------------
+  fs.writeFile(contactsPath, JSON.stringify(contacts, null, "\t"), (err) => {
     if (err) {
       console.log(err.message);
       return;
     }
-    const contacts = JSON.parse(data);
-    // Generating a new ID ---------------------
-    const ids = contacts.map((c) => c.id);
-    let maxId = ids[0];
-    for (i = 0; i < ids.length; ++i) {
-      if (ids[i] > maxId) {
-        maxId = ids[i];
-      }
-    }
-    const newId = maxId + 1;
-    // Adding new contact to contacts list -------------------
-    contacts.push({ id: newId, name, email, phone });
-    // -----------------------
-    fs.writeFile(contactsPath, JSON.stringify(contacts, null, "\t"), (err) => {
-      if (err) {
-        console.log(err.message);
-        return;
-      }
-      console.log(`///New contacts:`);
-      console.table(contacts);
-    });
+    console.log(`///New contacts:`);
+    console.table(contacts);
   });
 }
-
-// console.log(listContacts());
-// function listContacts() {
-//   fs.readFile(contactsPath, "utf-8", (err, data) => {
-//     if (err) {
-//       console.log(err.message);
-//       return;
-//     }
-//     return data;
-//   });
-// }
-
-// console.log(listContacts());
 
 module.exports = { listContacts, getContactById, removeContact, addContact };
